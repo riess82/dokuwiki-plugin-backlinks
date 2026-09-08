@@ -11,10 +11,13 @@ use dokuwiki\Search\MetadataSearch;
  *
  * Shows a list of pages that link back to a given page.
  *
- * Syntax:  {{backlinks>[pagename][#filterNS|!#filterNS]}}
+ * Syntax:  {{backlinks>[pagename][#filterNS][|option1][|option2]}}
  *
  *   [pagename] - a valid wiki pagename or a . for the current page
- *   [filterNS] - a valid,absolute namespace name, optionally prepended with ! to exclude
+ *   [filterNS] - a valid, absolute namespace name, optionally prepended with ! to exclude
+ *   [option]   - optional display option:
+ *                context - show the text line containing the backlink
+ *                sorted  - sort context entries alphabetically; only effective with context
  *
  * @license GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author  Michael Klier <chi@chimeric.de>
@@ -126,7 +129,7 @@ class syntax_plugin_backlinks extends SyntaxPlugin
             $options = $data[2];
 
             $displayContext = in_array('context', $options, true);
-            $sortLines   = in_array('sorted', $options, true);
+            $sortLines = in_array('sorted', $options, true);
 
             if ($backlinks !== [] && !empty($filterNS)) {
                 if (stripos($filterNS, "!") === 0) {
