@@ -75,13 +75,23 @@ class syntax_plugin_backlinks extends SyntaxPlugin
         // strip {{backlinks> from start and }} from end
         $match = substr($match, 12, -2);
 
-        $includeNS = '';
+        $includeNS = [];
+        $excludeNS = [];
+
         if (str_contains($match, "#")) {
-            $includeNS = substr(strstr($match, "#"), 1);
-            $match     = strstr($match, "#", true);
+            $filters = explode('#', substr(strstr($match, "#"), 1));
+            $match   = strstr($match, "#", true);
+
+            foreach ($filters as $filter) {
+                if (str_starts_with($filter, '!')) {
+                    $excludeNS[] = substr($filter, 1);
+                } else {
+                    $includeNS[] = $filter;
+                }
+            }
         }
 
-        return ([$match, $includeNS]);
+        return ([$match, $includeNS, $excludeNS]);
     }
 
     /**
@@ -116,22 +126,43 @@ class syntax_plugin_backlinks extends SyntaxPlugin
 
             $renderer->doc .= '<div id="plugin__backlinks">' . "\n";
 
-            $filterNS = $data[1];
-            if ($backlinks !== [] && !empty($filterNS)) {
-                if (stripos($filterNS, "!") === 0) {
-                    $filterNS = substr($filterNS, 1);
-                    Logger::debug("backlinks: excluding all of namespace: $filterNS");
-                    $backlinks = array_filter(
-                        $backlinks,
-                        static fn($ns) => stripos($ns, $filterNS) !== 0
-                    );
-                } else {
-                    Logger::debug("backlinks: including namespace: $filterNS only");
-                    $backlinks = array_filter(
-                        $backlinks,
-                        static fn($ns) => stripos($ns, (string) $filterNS) === 0
-                    );
-                }
+            $includeNS = $data[1];
+            $excludeNS = $data[2];
+
+            // Include namespaces
+            if ($backlinks !== [] && $includeNS !== []) {
+                Logger::debug("backlinks: including namespaces", $includeNS);
+
+                $backlinks = array_filter(
+                    $backlinks,
+                    static function ($ns) use ($includeNS) {
+                        foreach ($includeNS as $filterNS) {
+                            if (stripos($ns, $filterNS) === 0) {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    }
+                );
+            }
+
+            // Exclude namespaces
+            if ($backlinks !== [] && $excludeNS !== []) {
+                Logger::debug("backlinks: excluding namespaces", $excludeNS);
+
+                $backlinks = array_filter(
+                    $backlinks,
+                    static function ($ns) use ($excludeNS) {
+                        foreach ($excludeNS as $filterNS) {
+                            if (stripos($ns, $filterNS) === 0) {
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+                );
             }
 
             Logger::debug("backlinks: all backlinks to be rendered", $backlinks);
