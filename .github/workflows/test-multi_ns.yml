@@ -36,6 +36,13 @@ jobs:
             php _test/fetchphpunit.php
           fi
 
+    - name: Debug checkout
+      run: |
+        git branch --show-current
+        git log -1 --oneline
+        ls -l _test/syntax_multiple_namespaces.test.php
+        git ls-files _test/syntax_multiple_namespaces.test.php
+
       - name: Run PR1 test
         working-directory: _test
         run: |
