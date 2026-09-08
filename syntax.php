@@ -17,7 +17,7 @@ use dokuwiki\Search\MetadataSearch;
  *   [filterNS] - a valid, absolute namespace name, optionally prepended with ! to exclude
  *   [option]   - optional display option:
  *                context - show the text line containing the backlink
- *                sorted  - sort context entries alphabetically; only effective with context
+ *                sorted  - sort context entries alphabetically
  *
  * @license GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author  Michael Klier <chi@chimeric.de>
@@ -192,6 +192,9 @@ class syntax_plugin_backlinks extends SyntaxPlugin
                         $renderer->doc .= $line;
                     }
                 } else {
+                    if ($sortLines) {
+                        sort($backlinks);
+                    }
                     foreach ($backlinks as $backlink) {
                         $name = p_get_metadata($backlink, 'title');
                         if (empty($name)) {
