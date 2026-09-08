@@ -75,13 +75,19 @@ class syntax_plugin_backlinks extends SyntaxPlugin
         // strip {{backlinks> from start and }} from end
         $match = substr($match, 12, -2);
 
+        $options = [];
+        if (str_contains($match, "|")) {
+            $options = explode('|', substr(strstr($match, "|"), 1));
+            $match   = strstr($match, "|", true);
+        }
+
         $includeNS = '';
         if (str_contains($match, "#")) {
             $includeNS = substr(strstr($match, "#"), 1);
             $match     = strstr($match, "#", true);
         }
 
-        return ([$match, $includeNS]);
+        return ([$match, $includeNS, $options]);
     }
 
     /**
@@ -117,6 +123,11 @@ class syntax_plugin_backlinks extends SyntaxPlugin
             $renderer->doc .= '<div id="plugin__backlinks">' . "\n";
 
             $filterNS = $data[1];
+            $options = $data[2];
+
+            $displayContext = in_array('context', $options, true);
+            $sortLines   = in_array('sorted', $options, true);
+
             if ($backlinks !== [] && !empty($filterNS)) {
                 if (stripos($filterNS, "!") === 0) {
                     $filterNS = substr($filterNS, 1);
@@ -139,14 +150,55 @@ class syntax_plugin_backlinks extends SyntaxPlugin
             if ($backlinks !== []) {
                 $renderer->doc .= '<ul class="idx">';
 
-                foreach ($backlinks as $backlink) {
-                    $name = p_get_metadata($backlink, 'title');
-                    if (empty($name)) {
-                        $name = $backlink;
+                if ($displayContext) {
+                    $outputLines = [];
+
+                    foreach ($backlinks as $backlink) {
+                        $name = p_get_metadata($backlink, 'title');
+                        if (empty($name)) {
+                            $name = $backlink;
+                        }
+
+                        $lines = p_wiki_xhtml($backlink);
+                        $test = explode(PHP_EOL, $lines);
+
+                        foreach ($test as $line) {
+                            if (strpos($line, ' data-wiki-id="' . $match . '"') !== false) {
+                                $line = preg_replace('/<br\/>$/', '', $line);
+                                $line = preg_replace(
+                                    '/<a.*?' . preg_quote($match, '/') . '.*?((<\/)\w+(>))/',
+                                    '',
+                                    $line
+                                );
+                                $line = preg_replace('/<li.*?(>)/', '', $line);
+                                $line = preg_replace('/<div.*?(>)/', '', $line);
+                                $line = preg_replace('/<\/div.*?(>)/', '', $line);
+
+                                $outputLines[] = '<li><div class="li">' . $line . ' - '
+                                    . html_wikilink(':' . $backlink, $name)
+                                    . '</div></li>' . "\n";
+                            }
+                        }
                     }
-                    $renderer->doc .= '<li><div class="li">';
-                    $renderer->doc .= html_wikilink(':' . $backlink, $name);
-                    $renderer->doc .= '</div></li>' . "\n";
+
+                    if ($sortLines) {
+                        sort($outputLines);
+                    }
+
+                    foreach ($outputLines as $line) {
+                        $renderer->doc .= $line;
+                    }
+                } else {
+                    foreach ($backlinks as $backlink) {
+                        $name = p_get_metadata($backlink, 'title');
+                        if (empty($name)) {
+                            $name = $backlink;
+                        }
+
+                        $renderer->doc .= '<li><div class="li">';
+                        $renderer->doc .= html_wikilink(':' . $backlink, $name);
+                        $renderer->doc .= '</div></li>' . "\n";
+                    }
                 }
 
                 $renderer->doc .= '</ul>' . "\n";
