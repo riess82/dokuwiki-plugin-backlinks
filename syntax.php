@@ -11,7 +11,7 @@ use dokuwiki\Search\MetadataSearch;
  *
  * Shows a list of pages that link back to a given page.
  *
- * Syntax:  {{backlinks>[pagename][#filterNS|!#filterNS]}}
+ * Syntax:  {{backlinks>[pagename][#filterNS][#!filterNS]...}}
  *
  *   [pagename] - a valid wiki pagename or a . for the current page
  *   [filterNS] - a valid,absolute namespace name, optionally prepended with ! to exclude
