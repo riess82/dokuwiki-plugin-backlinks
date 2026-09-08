@@ -83,6 +83,9 @@ class syntax_plugin_backlinks extends SyntaxPlugin
             $match   = strstr($match, "#", true);
 
             foreach ($filters as $filter) {
+                if ($filter === '') {
+                    continue;
+                }
                 if (str_starts_with($filter, '!')) {
                     $excludeNS[] = substr($filter, 1);
                 } else {
