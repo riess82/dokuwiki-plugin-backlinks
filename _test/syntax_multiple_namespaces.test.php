@@ -120,7 +120,7 @@ class syntax_multiple_namespaces_plugin_backlinks_test extends DokuWikiTest
 
         $this->assertEquals(
             1,
-            ount($wikilinks->toArray()),
+            count($wikilinks->toArray()),
             'There should be 1 backlink'
         );
     }
